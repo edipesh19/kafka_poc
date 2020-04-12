@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 public class ManualConsumer {
 
-    private static String KAFKA_SERVER = "den02cdl.us.oracle.com:9092,den02bno.us.oracle.com:9092,den02qfw.us.oracle.com:9092";
+    private static String KAFKA_SERVER = "server1:9092,server2:9092,server3:9092";
 
     public static void main(String[] args) throws Exception {
 
