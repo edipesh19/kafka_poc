@@ -41,3 +41,5 @@ shadowJar {
     mergeServiceFiles()
     archiveName "${project.name}-${project.version}.jar"
 }
+
+build.dependsOn shadowJar

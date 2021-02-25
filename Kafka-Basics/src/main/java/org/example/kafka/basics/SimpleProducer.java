@@ -9,18 +9,23 @@ import java.util.Properties;
 public class SimpleProducer {
     public static void main(String[] args) throws Exception{
 
-        String topicName = "test";
-        String key = "Key1";
-        String value = "Value-2";
+        String topicName = "mytopic1";
+        String key;
+        String value;
 
         Properties props = new Properties();
-        props.put("bootstrap.servers", "den02cdl.us.oracle.com:9092,den02bno.us.oracle.com:9092");
+        props.put("bootstrap.servers", "localhost:9092");
         props.put("key.serializer","org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         Producer<String, String> producer = new KafkaProducer<>(props);
 
-        ProducerRecord<String, String> record = new ProducerRecord<>(topicName,key,value);
-        producer.send(record);
+        ProducerRecord<String, String> record;
+        for(int i=0;i<100000;i++) {
+            key = "Key" + i;
+            value = "Message-" + i;
+            record = new ProducerRecord<>(topicName,key,value);
+            producer.send(record);
+        }
         producer.close();
 
         System.out.println("SimpleProducer Completed.");
