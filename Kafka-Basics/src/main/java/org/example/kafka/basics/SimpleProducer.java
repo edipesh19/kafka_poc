@@ -9,7 +9,7 @@ import java.util.Properties;
 public class SimpleProducer {
     public static void main(String[] args) throws Exception{
 
-        String topicName = "mytopic1";
+        String topicName = "mytopic12";
         String key;
         String value;
 
