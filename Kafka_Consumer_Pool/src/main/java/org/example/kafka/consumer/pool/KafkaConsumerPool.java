@@ -10,6 +10,7 @@ import org.springframework.beans.PropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Arrays;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+@Component
 public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<K, V>> {
 
     public static final String PROP_POOL_HEARTBEAT = "pool.heartbeatThreadEnabled";
@@ -31,16 +33,20 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
         return heartbeatEnabled;
     }
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumerPool.class);
+
     @Autowired
-    private KafkaProperties kafkaProperties;
+    private KafkaClientsConfig kafkaProperties;
+
     public KafkaConsumerPool() {
         this(new ConsumerPoolFactory<K, V>());
+        log.info("========================= KafkaConsumerPool ========================= ");
     }
 
-    private Map<String, Object> consumerProperties;
+    private Properties consumerProperties;
+
     @PostConstruct
     void init(){
-        consumerProperties = kafkaProperties.buildConsumerProperties();
+        consumerProperties = kafkaProperties.getConsumerConfig();
 
         //spring.kafka.consumer.properties.pool.*
         Properties custom = (Properties) consumerProperties.get("properties");
@@ -58,7 +64,8 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
         poolFactory.objectPoolInstance = this;
         heartbeatEnabled = Boolean.parseBoolean( custom.getProperty(PROP_POOL_HEARTBEAT, "false"));
 
-        log.info("Intialized consumer pool of- size -> {}, maxidle {}, waitms {}", getMaxTotal(), getMaxIdle(), getMaxWaitMillis());
+        log.info("Initialized consumer pool of- size -> {}, maxidle {}, waitms {}", getMaxTotal(), getMaxIdle(), getMaxWaitMillis());
+        log.info("========================= KafkaConsumerPool init ========================= ");
     }
 
     /**
@@ -110,7 +117,7 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
         poolFactory.getConsumerProperties().put(prop, val);
     }
 
-    public void setConsumerProperties(Map<? extends String, ? extends Object> props) {
+    public void setConsumerProperties(Properties props) {
         poolFactory.getConsumerProperties().putAll(props);
     }
 

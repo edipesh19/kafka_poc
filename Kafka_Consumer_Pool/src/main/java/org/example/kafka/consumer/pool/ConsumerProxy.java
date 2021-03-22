@@ -5,9 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -19,7 +21,7 @@ public class ConsumerProxy<K,V> implements InvocationHandler {
     private final KafkaConsumerPool<K, V> objectPoolInstance;
     private final boolean threadEnabled;
 
-    public ConsumerProxy(Map<String, Object> configs, KafkaConsumerPool<K, V> objectPoolInstance) {
+    public ConsumerProxy(Properties configs, KafkaConsumerPool<K, V> objectPoolInstance) {
         consumerInstance = new KafkaConsumer<>(configs);
         this.objectPoolInstance = objectPoolInstance;
         if (objectPoolInstance.isHeartbeatThreadEnabled()) {
@@ -87,7 +89,12 @@ public class ConsumerProxy<K,V> implements InvocationHandler {
             wasPassivated = true;
             return Void.TYPE;
         }
-        return method.invoke(consumerInstance, args);
+        try {
+            return method.invoke(consumerInstance, args);
+        } catch (InvocationTargetException ite) {
+            log.info("Caught exception invoking method {}, because {}", method.getName(), ite.getCause());
+            throw ite.getCause();
+        }
     }
 
     private volatile boolean wasPassivated = false;

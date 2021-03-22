@@ -2,14 +2,10 @@ buildscript {
     repositories {
         jcenter() // this applies only to the Gradle 'Shadow' plugin
     }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
-    }
 }
 
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 apply from: "$rootDir/gradle/dependency-management.gradle"
 description = "Kafka example"
@@ -33,17 +29,7 @@ repositories {
 }
 
 dependencies {
-    poolDeps()
     springAppDeps()
-    compile "org.apache.kafka:kafka_2.13:2.4.0"
-    compile "org.apache.kafka:kafka-clients:2.4.0"
-    compileOnly "org.projectlombok:lombok:1.18.18"
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-shadowJar {
-    mergeServiceFiles()
-    archiveName "${project.name}-${project.version}.jar"
-}
-
-build.dependsOn shadowJar
