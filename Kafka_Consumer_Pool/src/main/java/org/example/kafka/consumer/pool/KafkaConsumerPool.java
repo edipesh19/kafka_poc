@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -37,9 +38,16 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
     @Autowired
     private KafkaClientsConfig kafkaProperties;
 
+    private final ConsumerPoolFactory<K, V> poolFactory;
+
     public KafkaConsumerPool() {
         this(new ConsumerPoolFactory<K, V>());
         log.info("========================= KafkaConsumerPool ========================= ");
+    }
+
+    private KafkaConsumerPool(ConsumerPoolFactory<K, V> thePool) {
+        super(thePool);
+        this.poolFactory = thePool;
     }
 
     private Properties consumerProperties;
@@ -65,7 +73,12 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
         heartbeatEnabled = Boolean.parseBoolean( custom.getProperty(PROP_POOL_HEARTBEAT, "false"));
 
         log.info("Initialized consumer pool of- size -> {}, maxidle {}, waitms {}", getMaxTotal(), getMaxIdle(), getMaxWaitMillis());
-        log.info("========================= KafkaConsumerPool init ========================= ");
+    }
+
+    public PoolableConsumer<K, V> acquire(long maxwait, TimeUnit unit, Collection<TopicPartition> partitions) throws Exception {
+        PoolableConsumer<K, V> consumer = borrowObject(unit.toMillis(maxwait));
+        consumer.assign(partitions);
+        return consumer;
     }
 
     /**
@@ -76,7 +89,7 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
      * @return
      * @throws Exception
      */
-    public Consumer<K, V> acquire(long maxwait, TimeUnit unit, Map<TopicPartition, Long> topicPartitionOffset) throws Exception {
+    public PoolableConsumer<K, V> acquire(long maxwait, TimeUnit unit, Map<TopicPartition, Long> topicPartitionOffset) throws Exception {
         PoolableConsumer<K, V> consumer = borrowObject(unit.toMillis(maxwait));
         consumer.assign(topicPartitionOffset.keySet());
         topicPartitionOffset.keySet().forEach(tp -> {
@@ -93,7 +106,7 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
      * @return
      * @throws Exception
      */
-    public Consumer<K, V> acquireLatest(long maxwait, TimeUnit unit, TopicPartition... topicPartitions) throws Exception {
+    public PoolableConsumer<K, V> acquireLatest(long maxwait, TimeUnit unit, TopicPartition... topicPartitions) throws Exception {
         PoolableConsumer<K, V> consumer = borrowObject(unit.toMillis(maxwait));
         List<TopicPartition> partitionList = Arrays.asList(topicPartitions);
         consumer.assign(partitionList);
@@ -105,14 +118,10 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
             throw new IllegalArgumentException("Not a type of PoolableConsumer!");
         returnObject((PoolableConsumer<K, V>) pooled);
     }
-    private final ConsumerPoolFactory<K, V> poolFactory;
-    private KafkaConsumerPool(ConsumerPoolFactory<K, V> thePool) {
-        super(thePool);
-        this.poolFactory = thePool;
-    }
-    public void setConsumerGroupPrefix(String prefix) {
-        poolFactory.setConsumerGroupPrefix(prefix);
-    }
+
+    //public void setConsumerGroupPrefix(String prefix) {
+    //    poolFactory.setConsumerGroupPrefix(prefix);
+    //}
     public void setConsumerProperty(String prop, Object val) {
         poolFactory.getConsumerProperties().put(prop, val);
     }

@@ -6,4 +6,5 @@ include 'Avro_Producer'
 //include 'Admin'
 include 'Kafka_Consumer_Pool'
 include 'sb-console'
+include 'Consumer-Cache'
 

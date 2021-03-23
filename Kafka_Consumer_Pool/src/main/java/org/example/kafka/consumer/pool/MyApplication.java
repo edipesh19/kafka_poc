@@ -14,6 +14,7 @@ import org.springframework.jmx.support.RegistrationPolicy;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 @EnableMBeanExport(registration = RegistrationPolicy.IGNORE_EXISTING)
@@ -39,11 +40,10 @@ public class MyApplication implements CommandLineRunner {
         @Override
         public void run(String... args) throws InterruptedException {
             LOG.info("EXECUTING : command line runner");
-            //kafkaStringConsumerPool = new KafkaStringConsumerPool();
             while (true) {
                 try {
-                    consumer = kafkaStringConsumerPool.getStringStringKafkaConsumerPool().borrowObject();
-                    consumer.assign(Collections.singletonList(new TopicPartition(topicName, 0)));
+                    consumer = kafkaStringConsumerPool.getStringStringKafkaConsumerPool()
+                        .acquire(1000, TimeUnit.MILLISECONDS, Collections.singletonList(new TopicPartition(topicName, 0)));
                     ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(3000));
                     if (records != null && !records.isEmpty()) {
                         for (ConsumerRecord<String, String> rec : records) {
@@ -58,8 +58,9 @@ public class MyApplication implements CommandLineRunner {
                 } finally {
                     LOG.info("Releasing consumer to the pool");
                     kafkaStringConsumerPool.getStringStringKafkaConsumerPool().release(consumer);
+                    consumer = null;
                 }
-                Thread.sleep(10000);
+                Thread.sleep(100);
             }
         }
 }
