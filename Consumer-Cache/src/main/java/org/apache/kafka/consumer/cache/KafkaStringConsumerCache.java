@@ -1,11 +1,13 @@
 package org.apache.kafka.consumer.cache;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +29,9 @@ public class KafkaStringConsumerCache {
     public CacheableConsumer<String, String> getConsumer(String topicName) throws Exception {
         if(!consumerCache.containsKey(topicName)){
             Properties consumerProp = getConsumer("Grp-" + topicName, topicName);
-            consumerCache.put(topicName, kafkaStringConsumerFactory.create(consumerProp));
+            CacheableConsumer<String, String> consumer = kafkaStringConsumerFactory.create(consumerProp);
+            consumer.assign(Collections.singletonList(new TopicPartition(topicName, 0)));
+            consumerCache.put(topicName, consumer);
         }
         return consumerCache.get(topicName);
     }

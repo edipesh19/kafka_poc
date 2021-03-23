@@ -50,7 +50,9 @@ public class MyApplication implements CommandLineRunner {
         @Override
         public void run() {
             try {
-                readRecords(consumerCache.getConsumer(topicName));
+                while (true) {
+                    readRecords(consumerCache.getConsumer(topicName));
+                }
             } catch (Exception e) {
                 LOG.error("Caught exception in creating consumer object");
             }
