@@ -5,4 +5,6 @@ include 'Kafka-Consumer'
 include 'Avro_Producer'
 //include 'Admin'
 include 'kafka_transaction_example'
+include 'netty_demo'
+include 'netty_cllient'
 
