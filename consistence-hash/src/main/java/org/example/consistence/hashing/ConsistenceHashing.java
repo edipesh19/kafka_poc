@@ -5,23 +5,26 @@ import org.slf4j.LoggerFactory;
 
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.stream.IntStream;
 
-// Todo : Implement virtual node
 // Todo : Implement test for scale-out and scale-in scenarios.
 public class ConsistenceHashing {
 
+    private static final int virtualNodeNum = 3;
     Logger logger = LoggerFactory.getLogger(ConsistenceHashing.class);
-
     //key represents the hash value of the server and value represents the server
-    private static SortedMap<Integer, String> sortedMap = new TreeMap<Integer, String>();
+    private final SortedMap<Integer, String> sortedMap = new TreeMap<Integer, String>();
 
     public String put(String data) {
         String ret = null;
         try {
-            int hash = getHash(data);
-            ret = sortedMap.put(hash, data);
+            IntStream.range(0, virtualNodeNum)
+                .mapToObj(i -> data + "&&VN" + i).forEach(vn -> {
+                int hash = getHash(vn);
+                sortedMap.put(hash, vn);
+            });
             logger.info("Server [{}] added to the map", data);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             logger.error("Caught Exception while adding entry {} into map because {}", data, ex.getMessage(), ex);
         }
         return ret;
@@ -34,14 +37,14 @@ public class ConsistenceHashing {
             int hash = getHash(key);
             //Get all Map s that are larger than the Hash value
             SortedMap<Integer, String> subMap = sortedMap.tailMap(hash);
-            if(subMap.isEmpty()){
+            if (subMap.isEmpty()) {
                 //If there is no one larger than the hash value of the key, start with the first node
                 Integer i = sortedMap.firstKey();
-                ret =  sortedMap.get(i);
-            }else{
+                ret = sortedMap.get(i);
+            } else {
                 //The first Key is the nearest node clockwise past the node.
                 Integer i = subMap.firstKey();
-                ret =  subMap.get(i);
+                ret = subMap.get(i);
             }
         } catch (Exception ex) {
             logger.error("Caught exception while retrieving {} from map because {}", key, ex.getMessage(), ex);
@@ -49,22 +52,32 @@ public class ConsistenceHashing {
         return ret;
     }
 
-    //Using FNV1_32_HASH algorithm to calculate the Hash value of the server,
-    // there is no need to rewrite hashCode method, the final effect is no difference.
+    public String remove(String data) {
+        String ret = null;
+        try {
+            ret = sortedMap.remove(getHash(data));
+        } catch (Exception e) {
+            logger.error("Caught exception while removing entry {} from map", data);
+        }
+        return ret;
+    }
+
+    // Using FNV1_32_HASH algorithm to calculate the Hash value of the server,
     private int getHash(String str) {
         final int p = 16777619;
         int hash = (int) 2166136261L;
-        for (int i = 0; i < str.length(); i++)
+        for (int i = 0; i < str.length(); i++) {
             hash = (hash ^ str.charAt(i)) * p;
+        }
         hash += hash << 13;
         hash ^= hash >> 7;
         hash += hash << 3;
         hash ^= hash >> 17;
         hash += hash << 5;
 
-        // If the calculated value is negative, take its absolute value.
-        if (hash < 0)
+        if (hash < 0) {
             hash = Math.abs(hash);
+        }
         return hash;
     }
 }
