@@ -7,4 +7,5 @@ include 'Avro_Producer'
 include 'kafka_transaction_example'
 include 'netty_demo'
 include 'netty_cllient'
+include 'consistence-hash'
 
