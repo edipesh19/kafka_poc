@@ -2,6 +2,7 @@ package org.example.consistence.hashing;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -10,13 +11,15 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.IntStream;
 
-public class ConsistenceHashing {
+@Component
+public class ConsistenceHashingImpl implements HostManager, KeyManager {
 
     private static final int virtualNodeNum = 100;
-    Logger logger = LoggerFactory.getLogger(ConsistenceHashing.class);
+    Logger logger = LoggerFactory.getLogger(ConsistenceHashingImpl.class);
     //key represents the hash value of the server and value represents the server
     private final SortedMap<Integer, String> sortedMap = new TreeMap<Integer, String>();
 
+    @Override
     public String put(String data) {
         String ret = null;
         try {
@@ -33,6 +36,7 @@ public class ConsistenceHashing {
         return ret;
     }
 
+    @Override
     public String get(String key) {
         String ret = null;
         try {
