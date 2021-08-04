@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<K, V>> {
 
+    private static final Logger log = LoggerFactory.getLogger(KafkaConsumerPool.class);
+
     public static final String PROP_POOL_HEARTBEAT = "pool.heartbeatThreadEnabled";
     public static final String PROP_POOL_MAX_SIZE = "pool.maxTotal";
     public static final String PROP_POOL_TEST = "pool.testOnBorrow";
@@ -33,7 +35,6 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
     boolean isHeartbeatThreadEnabled(){
         return heartbeatEnabled;
     }
-    private static final Logger log = LoggerFactory.getLogger(KafkaConsumerPool.class);
 
     @Autowired
     private KafkaClientsConfig kafkaProperties;
@@ -63,7 +64,7 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
 
         setConsumerProperties(consumerProperties);
 
-        setMaxTotal(Integer.parseInt( custom.getProperty(PROP_POOL_MAX_SIZE, "10")) );
+        setMaxTotal(Integer.parseInt( custom.getProperty(PROP_POOL_MAX_SIZE, "2")) );
         setTestOnBorrow(Boolean.parseBoolean(custom.getProperty(PROP_POOL_TEST, "true")));
         setMaxWaitMillis(Long.parseLong( custom.getProperty(PROP_POOL_MAXWAIT, "5000")));
         setTimeBetweenEvictionRunsMillis(Long.parseLong( custom.getProperty(PROP_POOL_EVICT_PERIOD, "5000")));
@@ -90,12 +91,17 @@ public class KafkaConsumerPool<K, V> extends GenericObjectPool<PoolableConsumer<
      * @throws Exception
      */
     public PoolableConsumer<K, V> acquire(long maxwait, TimeUnit unit, Map<TopicPartition, Long> topicPartitionOffset) throws Exception {
-        PoolableConsumer<K, V> consumer = borrowObject(unit.toMillis(maxwait));
-        consumer.assign(topicPartitionOffset.keySet());
-        topicPartitionOffset.keySet().forEach(tp -> {
-            consumer.seek(tp, topicPartitionOffset.get(tp));
-        });
-        return consumer;
+        try {
+            PoolableConsumer<K, V> consumer = borrowObject(unit.toMillis(maxwait));
+            consumer.assign(topicPartitionOffset.keySet());
+            topicPartitionOffset.keySet().forEach(tp -> {
+                consumer.seek(tp, topicPartitionOffset.get(tp));
+            });
+            return consumer;
+        } catch(Exception ex) {
+            log.error("No consumer found in the pool returning null");
+        }
+        return null;
     }
 
     /**

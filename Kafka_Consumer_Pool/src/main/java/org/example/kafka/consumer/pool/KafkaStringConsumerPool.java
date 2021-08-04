@@ -30,7 +30,7 @@ public class KafkaStringConsumerPool {
         LOG.info("========================= KafkaStringConsumerPool init =========================");
     }
 
-    public KafkaConsumerPool<String, String> getStringStringKafkaConsumerPool() {
+    public KafkaConsumerPool<String, String> getStringKafkaConsumerPool() {
         return stringStringKafkaConsumerPool;
     }
 }

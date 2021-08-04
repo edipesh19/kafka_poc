@@ -14,6 +14,9 @@ import org.springframework.jmx.support.RegistrationPolicy;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
@@ -23,7 +26,7 @@ public class MyApplication implements CommandLineRunner {
         private static Logger LOG = LoggerFactory
             .getLogger(MyApplication.class);
 
-        private final String topicName = "mytopic";
+        private final String topicName = "myTopic1";
 
 
         @Autowired
@@ -40,27 +43,29 @@ public class MyApplication implements CommandLineRunner {
         @Override
         public void run(String... args) throws InterruptedException {
             LOG.info("EXECUTING : command line runner");
-            while (true) {
-                try {
-                    consumer = kafkaStringConsumerPool.getStringStringKafkaConsumerPool()
-                        .acquire(1000, TimeUnit.MILLISECONDS, Collections.singletonList(new TopicPartition(topicName, 0)));
-                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(3000));
-                    if (records != null && !records.isEmpty()) {
-                        for (ConsumerRecord<String, String> rec : records) {
-                            System.out.println(records.partitions().iterator().next() + " . " + rec.key() + " -> " + rec.value());
-                        }
-                        consumer.commitSync();
-                    } else {
-                        System.out.println("No record found " + records.count());
-                    }
-                } catch (Exception e) {
-                    LOG.info("Caught exception in polling for record ", e);
-                } finally {
-                    LOG.info("Releasing consumer to the pool");
-                    kafkaStringConsumerPool.getStringStringKafkaConsumerPool().release(consumer);
-                    consumer = null;
-                }
-                Thread.sleep(100);
-            }
+            Thread t1 = new Thread(new ExecuteCall(1, kafkaStringConsumerPool), "T1");
+            Thread t2 = new Thread(new ExecuteCall(10, kafkaStringConsumerPool), "T2");
+            Thread t3 = new Thread(new ExecuteCall(20, kafkaStringConsumerPool), "T3");
+            Thread t4 = new Thread(new ExecuteCall(30, kafkaStringConsumerPool), "T4");
+            LOG.info("STARTING T1");
+            t1.start();
+            LOG.info("STARTING T2");
+            t2.start();
+            LOG.info("STARTING T3");
+            t3.start();
+            LOG.info("STARTING T4");
+            t4.start();
+
+            LOG.info("JOIN T1");
+            t1.join();
+            LOG.info("JOIN T2");
+            t2.join();
+            LOG.info("JOIN T3");
+            t3.join();
+            LOG.info("JOIN T4");
+            t4.join();
+
+            Thread.sleep(8000);
+            LOG.info("EXITING MAIN");
         }
 }

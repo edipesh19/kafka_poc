@@ -4,12 +4,16 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Proxy;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConsumerPoolFactory<K, V> extends BasePooledObjectFactory<PoolableConsumer<K, V>> {
+
+    private static final Logger log = LoggerFactory.getLogger(KafkaConsumerPool.class);
     private static AtomicInteger atomicInteger = new AtomicInteger();
     KafkaConsumerPool<K, V> objectPoolInstance;
 
@@ -20,6 +24,7 @@ public class ConsumerPoolFactory<K, V> extends BasePooledObjectFactory<PoolableC
     @SuppressWarnings("unchecked")
     @Override
     public PoolableConsumer<K, V> create() throws Exception {
+        log.info("Dipesh Pool Factory Create consumer");
         //Properties props = new Properties(consumerProperties);
         String  groupdId = groupPrefix;
         if(consumerProperties.containsKey(ConsumerConfig.GROUP_ID_CONFIG))
@@ -39,18 +44,21 @@ public class ConsumerPoolFactory<K, V> extends BasePooledObjectFactory<PoolableC
     @Override
     public void destroyObject(final PooledObject<PoolableConsumer<K,V>> p)
         throws Exception  {
+        log.info("Dipesh destroy object");
         p.getObject().destroyProxy();
     }
 
 
     @Override
     public boolean validateObject(final PooledObject<PoolableConsumer<K,V>> p) {
+        log.info("Dipesh validateObject object");
         return p.getObject().validateProxy();
     }
 
 
     @Override
     public void activateObject(final PooledObject<PoolableConsumer<K,V>> p) throws Exception {
+        log.info("Dipesh activateObject object");
         p.getObject().activateProxy();
     }
 
@@ -58,6 +66,7 @@ public class ConsumerPoolFactory<K, V> extends BasePooledObjectFactory<PoolableC
     @Override
     public void passivateObject(final PooledObject<PoolableConsumer<K,V>> p)
         throws Exception {
+        log.info("Dipesh passivateObject object");
         p.getObject().passivateProxy();
     }
 

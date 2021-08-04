@@ -9,7 +9,7 @@ import java.util.Properties;
 public class SimpleProducer {
     public static void main(String[] args) throws Exception{
 
-        String topicName = "mytopic12";
+        String topicName = "myTopic1";
         String key;
         String value;
 
@@ -20,7 +20,7 @@ public class SimpleProducer {
         Producer<String, String> producer = new KafkaProducer<>(props);
 
         ProducerRecord<String, String> record;
-        for(int i=0;i<100000;i++) {
+        for(int i=0;i<=50;i++) {
             key = "Key" + i;
             value = "Message-" + i;
             record = new ProducerRecord<>(topicName,key,value);
