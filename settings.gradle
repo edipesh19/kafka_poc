@@ -8,4 +8,7 @@ include 'kafka_transaction_example'
 include 'netty_demo'
 include 'netty_cllient'
 include 'consistence-hash'
+include 'spring-boot-plugin'
+include 'spring-plugin-demo'
+include 'plugin'
 
